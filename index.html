@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Kudzu Climate–Niche Simulator (25×25 Tile Map)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Basic styling -->
+  <style>
+    :root {
+      --bg-gray: #e5e5e5;
+      --card-bg: #ffffff;
+      --border-color: #e5e7eb;
+      --accent: #2563eb;
+      --accent-soft: #dbeafe;
+      --text-main: #111827;
+      --text-muted: #4b5563;
+      --shadow-soft: 0 10px 25px rgba(15, 23, 42, 0.08);
+      --radius-lg: 0.75rem;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 1.5rem;
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", sans-serif;
+      background-color: var(--bg-gray);
+      color: var(--text-main);
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    p {
+      margin-top: 0.25rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .page-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-soft);
+      padding: 1.2rem 1.4rem;
+      margin-bottom: 1.2rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .header-card {
+      margin-bottom: 1.5rem;
+    }
+
+    .two-column {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+      gap: 1.25rem;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        padding: 1rem;
+      }
+      .two-column {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .param-group {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.85rem;
+    }
+
+    .param-label {
+      font-weight: 500;
+      margin-bottom: 0.15rem;
+      color: var(--text-main);
+    }
+
+    .param-subtext {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    input[type="range"],
+    select {
+      width: 100%;
+      padding: 0.3rem 0.4rem;
+      border-radius: 0.375rem;
+      border: 1px solid #d1d5db;
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+    }
+
+    input[type="range"]:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.3);
+    }
+
+    input[type="range"] {
+      padding: 0;
+    }
+
+    .slider-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 0.75rem;
+      align-items: center;
+      margin-top: 0.35rem;
+    }
+
+    .slider-main {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .slider-value {
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 0.2rem 0.45rem;
+      border-radius: 999px;
+      background-color: #eff6ff;
+      color: #1d4ed8;
+      min-width: 3.2rem;
+      text-align: center;
+    }
+
+    .slider-end-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      max-width: 5rem;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .checkbox-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .checkbox-item input {
+      margin: 0;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.9rem;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      padding: 0.4rem 0.9rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      background-color: #e5e7eb;
+      color: var(--text-main);
+    }
+
+    .btn-secondary {
+      background-color: #f3f4f6;
+    }
+
+    .btn-secondary:hover {
+      background-color: #e5e7eb;
+    }
+
+    .chart-container-short {
+      position: relative;
+      width: 100%;
+      height: 220px;
+    }
+
+    .chart-container-map {
+      position: relative;
+      width: 100%;
+      height: 360px;
+    }
+
+    .legend-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      margin-top: 0.6rem;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      background-color: #f9fafb;
+      border: 1px solid #e5e7eb;
+    }
+
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      border: 1px solid #9ca3af;
+    }
+
+    .summary-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.2rem;
+      font-size: 0.82rem;
+      margin-top: 0.3rem;
+    }
+
+    .interpretation-text {
+      font-size: 0.86rem;
+      line-height: 1.55;
+      color: var(--text-muted);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.18rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      background-color: #eef2ff;
+      color: #4338ca;
+    }
+
+    .scenario-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+    }
+
+    ul.simple-list {
+      margin-top: 0.1rem;
+      margin-bottom: 0.6rem;
+      padding-left: 1.2rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* Stylized US tile map: 25x25, tiles built dynamically */
+    .us-tile-map {
+      display: grid;
+      grid-template-columns: repeat(25, 1fr);
+      gap: 1.5px;
+      width: 100%;
+      height: 100%;
+      padding: 4px;
+      box-sizing: border-box;
+    }
+
+    .tile-empty {
+      background: transparent;
+    }
+
+    .state-tile {
+      border-radius: 3px;
+      border: 1px solid #e5e7eb;
+      font-size: clamp(0.45rem, 0.7vw, 0.7rem);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 1px;
+      color: #111827;
+      background-color: #d4d4d4; /* default: unsuitable */
+      box-sizing: border-box;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .state-code {
+      font-weight: 600;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .state-name {
+      display: none;
+    }
+
+    @media (max-width: 500px) {
+      .state-tile {
+        font-size: 0.5rem;
+      }
+    }
+  </style>
+
+  <!-- Chart.js for bar chart -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- MathJax v3 (kept for consistency with your other apps, though not used heavily here) -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script id="MathJax-script" async
+          src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+</head>
+<body>
+<div class="page-container">
+  <!-- Header / Intro -->
+  <div class="card header-card">
+    <div class="tag">Species distribution & climate change</div>
+    <h1>Kudzu Climate–Niche Simulator</h1>
+    <p>
+      Kudzu (<em>Pueraria montana</em>) is a classic invasive vine in the southeastern United States.
+      Its distribution depends on climate: temperature, precipitation, and moisture conditions.
+    </p>
+    <p>
+      This simulator lets you explore how different levels of climate change and different choices
+      of environmental variables affect the projected distribution of suitable habitat for kudzu
+      across the United States.
+    </p>
+  </div>
+
+  <div class="two-column">
+    <!-- LEFT COLUMN -->
+    <div>
+      <div class="card">
+        <div class="card-title">Climate scenario & variables</div>
+
+        <!-- Warming slider -->
+        <div class="param-group">
+          <div class="param-label">Climate change level (toward ~2050)</div>
+          <div class="param-subtext">
+            The slider represents a continuum from “we completely stop carbon emissions” (0%)
+            to “business-as-usual emissions” (100%).
+          </div>
+          <div class="slider-row">
+            <span class="slider-end-label">Carbon emissions stopped</span>
+            <div class="slider-main">
+              <input id="warmingSlider" type="range" min="0" max="100" step="5" value="100">
+              <div class="slider-value">
+                <span id="warmingValue">100</span>%
+              </div>
+            </div>
+            <span class="slider-end-label">Business-as-usual emissions</span>
+          </div>
+        </div>
+
+        <!-- Variable toggles -->
+        <div class="param-group" style="margin-top:0.75rem;">
+          <div class="param-label">Variables included in the model</div>
+          <div class="param-subtext">
+            The SDM always uses temperature. Use these checkboxes to try runs with or without
+            additional climate variables.
+          </div>
+          <div class="checkbox-row">
+            <label class="checkbox-item">
+              <input type="checkbox" id="chkTemperature" checked disabled>
+              <span>Temperature (always included)</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="chkPrecipitation" checked>
+              <span>Precipitation</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="chkHumidity" checked>
+              <span>Humidity / moisture balance</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Reset button -->
+        <div class="button-row">
+          <button class="btn btn-secondary" id="btnReset">
+            Reset to default (business-as-usual, all variables)
+          </button>
+        </div>
+
+        <div class="scenario-label">
+          Current settings: <span id="scenarioLabel">All variables, business-as-usual warming</span>
+        </div>
+      </div>
+
+      <!-- Conceptual model in words (discovery-oriented) -->
+      <div class="card">
+        <div class="card-title">What the simulator is doing</div>
+        <p>
+          Imagine that someone has already fit a species distribution model (SDM) for kudzu that links
+          its presence to climate conditions across the U.S.
+        </p>
+        <p>
+          The simulator blends between a present-day climate map and a future climate map. When the
+          slider is near 0%, you are seeing a pattern closer to today’s climate. As you move the slider
+          toward 100%, the pattern shifts toward a warmer, altered climate around ~2050.
+        </p>
+        <p>
+          The checkboxes control which climate variables the SDM is allowed to use. Your job is to:
+        </p>
+        <ul class="simple-list">
+          <li>move the climate slider,</li>
+          <li>turn variables on and off, and</li>
+          <li>look for patterns on the map that seem realistic (or unrealistic) for kudzu.</li>
+        </ul>
+        <p>
+          You don’t need the exact equations. Focus on the patterns and think about whether they make
+          biological sense for a warm, moisture-loving vine.
+        </p>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div>
+      <!-- Map card -->
+      <div class="card">
+        <div class="card-title">Projected kudzu suitability across the U.S.</div>
+        <p>
+          The grid below is a stylized 25×25 “tile map” of the United States. Each state is made up of
+          one or more tiles, and a single central tile for each state is labeled with the state
+          abbreviation. Colors show how suitability for kudzu changes under the current settings.
+        </p>
+
+        <div class="chart-container-map">
+          <div class="us-tile-map" id="usTileMap">
+            <!-- Tiles are injected by JavaScript based on a 25x25 grid and state shapes -->
+          </div>
+        </div>
+
+        <div class="legend-row" style="margin-top:0.8rem;">
+          <div class="legend-item">
+            <span class="legend-color" id="legendIncrease"></span>
+            <span>Increase (newly suitable / more suitable)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" id="legendDecrease"></span>
+            <span>Decrease (less suitable / no longer suitable)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" id="legendStable"></span>
+            <span>Stable (remains suitable)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" id="legendUnsuitable"></span>
+            <span>Unsuitable (no habitat)</span>
+          </div>
+        </div>
+
+        <div class="summary-row" id="summaryRow">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <!-- Bar chart card -->
+      <div class="card">
+        <div class="card-title">Summary of habitat categories</div>
+        <p>
+          This bar chart summarizes how many states fall into each category
+          (increase, decrease, stable, unsuitable) under the current settings.
+        </p>
+        <div class="chart-container-short">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Interpretation card -->
+      <div class="card">
+        <div class="card-title">How to interpret this run</div>
+        <div id="interpretationText" class="interpretation-text">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const GRID_ROWS = 25;
+  const GRID_COLS = 25;
+
+  // Color codes for categories
+  const categoryColors = {
+    increase: '#ef4444',   // red
+    decrease: '#22c55e',   // green
+    stable:   '#facc15',   // yellow
+    unsuitable: '#d4d4d4'  // gray
+  };
+
+  function attachLegendColors() {
+    document.getElementById('legendIncrease').style.backgroundColor = categoryColors.increase;
+    document.getElementById('legendDecrease').style.backgroundColor = categoryColors.decrease;
+    document.getElementById('legendStable').style.backgroundColor = categoryColors.stable;
+    document.getElementById('legendUnsuitable').style.backgroundColor = categoryColors.unsuitable;
+  }
+
+  // Broad climate regions with simplified SDM behavior
+  const regionDefs = {
+    SE_core: {
+      name: 'Southeast core',
+      currentSuitability: 1,
+      future_all: 'stable',
+      future_noPrec: 'stable',
+      future_noHum: 'decrease',
+      future_noBoth: 'increase'
+    },
+    Gulf_coast: {
+      name: 'Gulf Coast',
+      currentSuitability: 1,
+      future_all: 'decrease',
+      future_noPrec: 'increase',
+      future_noHum: 'increase',
+      future_noBoth: 'increase'
+    },
+    Mid_Atlantic: {
+      name: 'Mid-Atlantic',
+      currentSuitability: 1,
+      future_all: 'increase',
+      future_noPrec: 'increase',
+      future_noHum: 'stable',
+      future_noBoth: 'increase'
+    },
+    NE_corridor: {
+      name: 'Northeast corridor',
+      currentSuitability: 0,
+      future_all: 'increase',
+      future_noPrec: 'increase',
+      future_noHum: 'unsuitable',
+      future_noBoth: 'increase'
+    },
+    New_England: {
+      name: 'New England',
+      currentSuitability: 0,
+      future_all: 'increase',
+      future_noPrec: 'increase',
+      future_noHum: 'unsuitable',
+      future_noBoth: 'stable'
+    },
+    Midwest_east: {
+      name: 'East-central Midwest',
+      currentSuitability: 1,
+      future_all: 'stable',
+      future_noPrec: 'increase',
+      future_noHum: 'stable',
+      future_noBoth: 'increase'
+    },
+    Midwest_north: {
+      name: 'Northern Midwest',
+      currentSuitability: 0,
+      future_all: 'increase',
+      future_noPrec: 'increase',
+      future_noHum: 'unsuitable',
+      future_noBoth: 'increase'
+    },
+    Plains_south: {
+      name: 'Southern Great Plains',
+      currentSuitability: 0,
+      future_all: 'unsuitable',
+      future_noPrec: 'increase',
+      future_noHum: 'stable',
+      future_noBoth: 'increase'
+    },
+    Plains_north: {
+      name: 'Northern Great Plains',
+      currentSuitability: 0,
+      future_all: 'unsuitable',
+      future_noPrec: 'increase',
+      future_noHum: 'unsuitable',
+      future_noBoth: 'increase'
+    },
+    Rockies: {
+      name: 'Rocky Mountains',
+      currentSuitability: 0,
+      future_all: 'unsuitable',
+      future_noPrec: 'stable',
+      future_noHum: 'unsuitable',
+      future_noBoth: 'increase'
+    },
+    SW_desert: {
+      name: 'Desert Southwest',
+      currentSuitability: 0,
+      future_all: 'unsuitable',
+      future_noPrec: 'increase',
+      future_noHum: 'unsuitable',
+      future_noBoth: 'increase'
+    },
+    CA_coast: {
+      name: 'California coast',
+      currentSuitability: 0,
+      future_all: 'increase',
+      future_noPrec: 'unsuitable',
+      future_noHum: 'stable',
+      future_noBoth: 'unsuitable'
+    },
+    PNW: {
+      name: 'Pacific Northwest',
+      currentSuitability: 0,
+      future_all: 'increase',
+      future_noPrec: 'increase',
+      future_noHum: 'stable',
+      future_noBoth: 'increase'
+    },
+    Other_unsuitable: {
+      name: 'Outside main U.S. range',
+      currentSuitability: 0,
+      future_all: 'unsuitable',
+      future_noPrec: 'unsuitable',
+      future_noHum: 'unsuitable',
+      future_noBoth: 'unsuitable'
+    }
+  };
+
+  // Map each state (full name) to one of the broad regions
+  const stateRegionMap = {
+    // Pacific & West
+    'Washington': 'PNW',
+    'Oregon': 'PNW',
+    'California': 'CA_coast',
+    'Idaho': 'Rockies',
+    'Montana': 'Rockies',
+    'Wyoming': 'Rockies',
+    'Nevada': 'SW_desert',
+    'Utah': 'Rockies',
+    'Colorado': 'Rockies',
+    'Arizona': 'SW_desert',
+    'New Mexico': 'SW_desert',
+
+    // Plains & Texas
+    'North Dakota': 'Plains_north',
+    'South Dakota': 'Plains_north',
+    'Nebraska': 'Plains_north',
+    'Kansas': 'Plains_south',
+    'Oklahoma': 'Plains_south',
+    'Texas': 'Plains_south',
+
+    // Midwest & Great Lakes
+    'Minnesota': 'Midwest_north',
+    'Iowa': 'Midwest_north',
+    'Wisconsin': 'Midwest_north',
+    'Michigan': 'Midwest_north',
+    'Missouri': 'Midwest_east',
+    'Illinois': 'Midwest_east',
+    'Indiana': 'Midwest_east',
+    'Ohio': 'Midwest_east',
+    'Kentucky': 'Midwest_east',
+
+    // Southeast & Gulf
+    'Arkansas': 'Gulf_coast',
+    'Louisiana': 'Gulf_coast',
+    'Mississippi': 'Gulf_coast',
+    'Alabama': 'SE_core',
+    'Georgia': 'SE_core',
+    'Florida': 'SE_core',
+    'Tennessee': 'SE_core',
+    'South Carolina': 'SE_core',
+    'North Carolina': 'Mid_Atlantic',
+    'Virginia': 'Mid_Atlantic',
+    'West Virginia': 'Mid_Atlantic',
+
+    // Mid-Atlantic & Northeast corridor
+    'Pennsylvania': 'NE_corridor',
+    'New Jersey': 'NE_corridor',
+    'Delaware': 'NE_corridor',
+    'Maryland': 'NE_corridor',
+    'New York': 'NE_corridor',
+
+    // New England
+    'Connecticut': 'New_England',
+    'Rhode Island': 'New_England',
+    'Massachusetts': 'New_England',
+    'Vermont': 'New_England',
+    'New Hampshire': 'New_England',
+    'Maine': 'New_England',
+
+    // Alaska & Hawaii
+    'Alaska': 'Other_unsuitable',
+    'Hawaii': 'Other_unsuitable'
+  };
+
+  // State shapes in the 25x25 grid.
+  // r, c are 0-based indices (0 <= r < 25, 0 <= c < 25).
+  // Larger states get multiple tiles; smaller states get one tile.
+  const statesData = {
+    // West & Northwest
+    'Washington': {
+      abbr: 'WA',
+      cells: [{r:4, c:3}, {r:4, c:4}]
+    },
+    'Oregon': {
+      abbr: 'OR',
+      cells: [{r:5, c:3}, {r:5, c:4}]
+    },
+    'California': {
+      abbr: 'CA',
+      cells: [
+        {r:7, c:3}, {r:8, c:3},
+        {r:8, c:4}, {r:9, c:4}
+      ]
+    },
+    'Nevada': {
+      abbr: 'NV',
+      cells: [{r:6, c:4}, {r:7, c:4}]
+    },
+    'Idaho': {
+      abbr: 'ID',
+      cells: [{r:5, c:5}, {r:6, c:5}]
+    },
+    'Montana': {
+      abbr: 'MT',
+      cells: [{r:4, c:6}, {r:4, c:7}]
+    },
+    'Wyoming': {
+      abbr: 'WY',
+      cells: [{r:5, c:6}]
+    },
+    'Utah': {
+      abbr: 'UT',
+      cells: [{r:7, c:5}, {r:7, c:6}]
+    },
+    'Colorado': {
+      abbr: 'CO',
+      cells: [{r:7, c:7}, {r:7, c:8}]
+    },
+    'Arizona': {
+      abbr: 'AZ',
+      cells: [{r:8, c:5}, {r:9, c:5}]
+    },
+    'New Mexico': {
+      abbr: 'NM',
+      cells: [{r:8, c:6}, {r:9, c:6}]
+    },
+
+    // Plains & Texas region
+    'North Dakota': {
+      abbr: 'ND',
+      cells: [{r:4, c:8}]
+    },
+    'South Dakota': {
+      abbr: 'SD',
+      cells: [{r:5, c:8}]
+    },
+    'Nebraska': {
+      abbr: 'NE',
+      cells: [{r:6, c:8}]
+    },
+    'Kansas': {
+      abbr: 'KS',
+      cells: [{r:7, c:8}]
+    },
+    'Oklahoma': {
+      abbr: 'OK',
+      cells: [{r:8, c:8}]
+    },
+    'Texas': {
+      abbr: 'TX',
+      cells: [
+        {r:9, c:7}, {r:9, c:8},
+        {r:10, c:7}, {r:10, c:8}
+      ]
+    },
+
+    // Midwest & Great Lakes
+    'Minnesota': {
+      abbr: 'MN',
+      cells: [{r:4, c:10}]
+    },
+    'Iowa': {
+      abbr: 'IA',
+      cells: [{r:6, c:10}]
+    },
+    'Wisconsin': {
+      abbr: 'WI',
+      cells: [{r:4, c:11}]
+    },
+    'Michigan': {
+      abbr: 'MI',
+      cells: [{r:4, c:13}, {r:5, c:13}]
+    },
+    'Missouri': {
+      abbr: 'MO',
+      cells: [{r:7, c:10}]
+    },
+    'Illinois': {
+      abbr: 'IL',
+      cells: [{r:6, c:11}]
+    },
+    'Indiana': {
+      abbr: 'IN',
+      cells: [{r:6, c:12}]
+    },
+    'Ohio': {
+      abbr: 'OH',
+      cells: [{r:6, c:13}]
+    },
+    'Kentucky': {
+      abbr: 'KY',
+      cells: [{r:7, c:11}]
+    },
+
+    // Southeast & Gulf
+    'Arkansas': {
+      abbr: 'AR',
+      cells: [{r:8, c:9}]
+    },
+    'Louisiana': {
+      abbr: 'LA',
+      cells: [{r:9, c:9}]
+    },
+    'Mississippi': {
+      abbr: 'MS',
+      cells: [{r:9, c:10}]
+    },
+    'Alabama': {
+      abbr: 'AL',
+      cells: [{r:9, c:11}]
+    },
+    'Georgia': {
+      abbr: 'GA',
+      cells: [{r:9, c:12}]
+    },
+    'Florida': {
+      abbr: 'FL',
+      cells: [
+        {r:10, c:13}, {r:11, c:13},
+        {r:11, c:14}
+      ]
+    },
+    'Tennessee': {
+      abbr: 'TN',
+      cells: [{r:8, c:11}]
+    },
+    'South Carolina': {
+      abbr: 'SC',
+      cells: [{r:9, c:13}]
+    },
+    'North Carolina': {
+      abbr: 'NC',
+      cells: [{r:8, c:13}]
+    },
+
+    // Mid-Atlantic
+    'Virginia': {
+      abbr: 'VA',
+      cells: [{r:8, c:14}]
+    },
+    'West Virginia': {
+      abbr: 'WV',
+      cells: [{r:7, c:13}]
+    },
+    'Maryland': {
+      abbr: 'MD',
+      cells: [{r:7, c:15}]
+    },
+    'Delaware': {
+      abbr: 'DE',
+      cells: [{r:7, c:16}]
+    },
+
+    // Northeast corridor & New England
+    'Pennsylvania': {
+      abbr: 'PA',
+      cells: [{r:6, c:15}]
+    },
+    'New Jersey': {
+      abbr: 'NJ',
+      cells: [{r:6, c:16}]
+    },
+    'New York': {
+      abbr: 'NY',
+      cells: [{r:5, c:15}]
+    },
+    'Connecticut': {
+      abbr: 'CT',
+      cells: [{r:6, c:17}]
+    },
+    'Rhode Island': {
+      abbr: 'RI',
+      cells: [{r:6, c:18}]
+    },
+    'Massachusetts': {
+      abbr: 'MA',
+      cells: [{r:5, c:16}]
+    },
+    'Vermont': {
+      abbr: 'VT',
+      cells: [{r:4, c:16}]
+    },
+    'New Hampshire': {
+      abbr: 'NH',
+      cells: [{r:4, c:17}]
+    },
+    'Maine': {
+      abbr: 'ME',
+      cells: [{r:3, c:18}]
+    },
+
+    // Alaska & Hawaii
+    'Alaska': {
+      abbr: 'AK',
+      cells: [
+        {r:17, c:3}, {r:17, c:4},
+        {r:18, c:3}, {r:18, c:4}
+      ]
+    },
+    'Hawaii': {
+      abbr: 'HI',
+      cells: [{r:19, c:7}, {r:19, c:8}]
+    }
+  };
+
+  // Build the 25x25 grid of tiles based on statesData.
+  function buildTileMap() {
+    const container = document.getElementById('usTileMap');
+    if (!container) return;
+
+    // grid[r][c] = stateName or null
+    const grid = [];
+    for (let r = 0; r < GRID_ROWS; r++) {
+      const row = new Array(GRID_COLS).fill(null);
+      grid.push(row);
+    }
+
+    // Place states into the grid
+    Object.keys(statesData).forEach(stateName => {
+      const cells = statesData[stateName].cells;
+      cells.forEach(cell => {
+        const r = cell.r;
+        const c = cell.c;
+        if (r >= 0 && r < GRID_ROWS && c >= 0 && c < GRID_COLS) {
+          grid[r][c] = stateName;
+        }
+      });
+    });
+
+    // For each state, choose a label cell near the geometric center of its tiles
+    const labelCellMap = {};
+    Object.keys(statesData).forEach(stateName => {
+      const cells = statesData[stateName].cells;
+      if (!cells || !cells.length) return;
+      let sumR = 0;
+      let sumC = 0;
+      cells.forEach(cell => {
+        sumR += cell.r;
+        sumC += cell.c;
+      });
+      const meanR = sumR / cells.length;
+      const meanC = sumC / cells.length;
+      let bestCell = cells[0];
+      let bestDist = Infinity;
+      cells.forEach(cell => {
+        const d = Math.hypot(cell.r - meanR, cell.c - meanC);
+        if (d < bestDist) {
+          bestDist = d;
+          bestCell = cell;
+        }
+      });
+      labelCellMap[stateName] = `${bestCell.r},${bestCell.c}`;
+    });
+
+    // Build DOM elements
+    const frag = document.createDocumentFragment();
+    for (let r = 0; r < GRID_ROWS; r++) {
+      for (let c = 0; c < GRID_COLS; c++) {
+        const stateName = grid[r][c];
+        if (!stateName) {
+          const empty = document.createElement('div');
+          empty.className = 'tile-empty';
+          frag.appendChild(empty);
+        } else {
+          const tile = document.createElement('div');
+          tile.className = 'state-tile';
+          tile.setAttribute('data-state', stateName);
+
+          const labelKey = labelCellMap[stateName];
+          const thisKey = `${r},${c}`;
+          const abbr = statesData[stateName].abbr || '';
+
+          if (thisKey === labelKey) {
+            const span = document.createElement('span');
+            span.className = 'state-code';
+            span.textContent = abbr;
+            tile.appendChild(span);
+          } else {
+            // unlabeled tile for this state
+            const span = document.createElement('span');
+            span.className = 'state-code';
+            span.textContent = '';
+            tile.appendChild(span);
+          }
+
+          frag.appendChild(tile);
+        }
+      }
+    }
+
+    container.innerHTML = '';
+    container.appendChild(frag);
+  }
+
+  function getScenarioKey(includePrec, includeHum) {
+    if (includePrec && includeHum) return 'all';
+    if (!includePrec && includeHum) return 'noPrec';
+    if (includePrec && !includeHum) return 'noHum';
+    return 'noBoth';
+  }
+
+  function describePredictorSet(includePrec, includeHum) {
+    if (includePrec && includeHum) {
+      return 'temperature, precipitation, and humidity (all three variables are included).';
+    } else if (!includePrec && includeHum) {
+      return 'temperature and humidity, but precipitation is left out.';
+    } else if (includePrec && !includeHum) {
+      return 'temperature and precipitation, but humidity/moisture balance is left out.';
+    } else {
+      return 'temperature only. Both precipitation and humidity are left out.';
+    }
+  }
+
+  function scenarioNarrative(scenarioKey) {
+    switch (scenarioKey) {
+      case 'all':
+        return 'With all variables included, the model shows a plausible northward and westward expansion into the Northeast, upper Midwest, and Pacific Northwest, some gains along the California coast, and modest contraction in parts of the Gulf Coast.';
+      case 'noPrec':
+        return 'Without precipitation, the model tends to spread kudzu into very dry regions such as parts of the Great Plains and desert Southwest.';
+      case 'noHum':
+        return 'Without humidity/moisture balance, the model can downplay very humid coastal areas and emphasize stress in some parts of the Southeast.';
+      case 'noBoth':
+        return 'With only temperature, the model behaves like a simple “warm equals good” rule, lighting up hot regions (including deserts and mountains) as suitable.';
+      default:
+        return '';
+    }
+  }
+
+  let barChart;
+
+  function initBarChart() {
+    const barCtx = document.getElementById('barChart').getContext('2d');
+    barChart = new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Increase', 'Decrease', 'Stable', 'Unsuitable'],
+        datasets: [{
+          label: 'Number of states',
+          data: [0, 0, 0, 0],
+          backgroundColor: [
+            categoryColors.increase,
+            categoryColors.decrease,
+            categoryColors.stable,
+            categoryColors.unsuitable
+          ],
+          borderColor: '#4b5563',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: { grid: { display: false } },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 2,
+              callback: (value) => Number(value).toFixed(0)
+            },
+            grid: { color: '#e5e7eb' }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                return `${ctx.raw} state(s)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function runSimulation() {
+    // Map from stateName -> classification
+    const classificationByState = {};
+
+    const warmingSlider = document.getElementById('warmingSlider');
+    const includePrec = document.getElementById('chkPrecipitation').checked;
+    const includeHum = document.getElementById('chkHumidity').checked;
+    const w = Number(warmingSlider.value) / 100;
+
+    const scenarioKey = getScenarioKey(includePrec, includeHum);
+    const scenarioLabelEl = document.getElementById('scenarioLabel');
+
+    let warmingDesc;
+    if (w === 0) {
+      warmingDesc = 'no additional warming (0%)';
+    } else if (w <= 0.4) {
+      warmingDesc = `${Math.round(w * 100)}% warming (strong mitigation)`;
+    } else if (w <= 0.7) {
+      warmingDesc = `${Math.round(w * 100)}% warming (moderate mitigation)`;
+    } else {
+      warmingDesc = `${Math.round(w * 100)}% warming (business-as-usual-like)`;
+    }
+
+    let scenarioText;
+    switch (scenarioKey) {
+      case 'all':
+        scenarioText = `All variables, ${warmingDesc}`;
+        break;
+      case 'noPrec':
+        scenarioText = `Precipitation omitted, ${warmingDesc}`;
+        break;
+      case 'noHum':
+        scenarioText = `Humidity omitted, ${warmingDesc}`;
+        break;
+      default:
+        scenarioText = `Temperature only, ${warmingDesc}`;
+    }
+    scenarioLabelEl.textContent = scenarioText;
+
+    const counts = { increase: 0, decrease: 0, stable: 0, unsuitable: 0 };
+
+    // Classify each state once
+    Object.keys(statesData).forEach(stateName => {
+      const regionId = stateRegionMap[stateName] || 'Other_unsuitable';
+      const region = regionDefs[regionId] || regionDefs.Other_unsuitable;
+
+      const currentClass = region.currentSuitability === 1 ? 'stable' : 'unsuitable';
+      const futureClass = region['future_' + scenarioKey];
+
+      const classification = w < 0.5 ? currentClass : futureClass;
+      classificationByState[stateName] = classification;
+
+      if (counts[classification] !== undefined) {
+        counts[classification] += 1;
+      }
+    });
+
+    // Color all tiles according to their state's classification
+    const tileNodes = document.querySelectorAll('.state-tile');
+    tileNodes.forEach(tile => {
+      const stateName = tile.getAttribute('data-state');
+      const cls = classificationByState[stateName] || 'unsuitable';
+      const color = categoryColors[cls] || categoryColors.unsuitable;
+      tile.style.backgroundColor = color;
+
+      // Tooltip
+      const regionId = stateRegionMap[stateName] || 'Other_unsuitable';
+      const region = regionDefs[regionId] || regionDefs.Other_unsuitable;
+      tile.title = `${stateName} – ${cls} habitat (${region.name})`;
+    });
+
+    // Update bar chart based on state counts
+    barChart.data.datasets[0].data = [
+      counts.increase,
+      counts.decrease,
+      counts.stable,
+      counts.unsuitable
+    ];
+    barChart.update('none');
+
+    // Update summary
+    const summaryRow = document.getElementById('summaryRow');
+    summaryRow.innerHTML = `
+      <div class="summary-item">
+        <span>${counts.increase}</span> state(s) increase in suitability
+      </div>
+      <div class="summary-item">
+        <span>${counts.decrease}</span> state(s) decrease in suitability
+      </div>
+      <div class="summary-item">
+        <span>${counts.stable}</span> state(s) remain suitable (stable)
+      </div>
+      <div class="summary-item">
+        <span>${counts.unsuitable}</span> state(s) remain unsuitable
+      </div>
+    `;
+
+    // Interpretation text
+    const interpretationEl = document.getElementById('interpretationText');
+    const predictorText = describePredictorSet(includePrec, includeHum);
+    const scenarioTextLong = scenarioNarrative(scenarioKey);
+    const warmingPct = Math.round(w * 100);
+
+    interpretationEl.innerHTML = `
+      <p>
+        With <strong>${warmingPct}%</strong> of the full warming scenario and the current
+        choice of variables, the model classifies
+        <strong>${counts.increase}</strong> state(s) as increasing in suitability for kudzu,
+        <strong>${counts.decrease}</strong> state(s) as decreasing,
+        <strong>${counts.stable}</strong> as remaining suitable, and
+        <strong>${counts.unsuitable}</strong> as unsuitable.
+      </p>
+      <p>
+        In this run, the SDM is using ${predictorText}
+      </p>
+      <p>
+        ${scenarioTextLong}
+      </p>
+      <p>
+        As you explore different combinations, ask yourself: which maps look most plausible
+        for a vine that needs warm, moist conditions, and which maps seem harder to justify?
+      </p>
+    `;
+  }
+
+  function attachHandlers() {
+    const warmingSlider = document.getElementById('warmingSlider');
+    const warmingValueEl = document.getElementById('warmingValue');
+    const chkPrecip = document.getElementById('chkPrecipitation');
+    const chkHum = document.getElementById('chkHumidity');
+    const btnReset = document.getElementById('btnReset');
+
+    warmingSlider.addEventListener('input', () => {
+      warmingValueEl.textContent = warmingSlider.value;
+      runSimulation();
+    });
+
+    chkPrecip.addEventListener('change', runSimulation);
+    chkHum.addEventListener('change', runSimulation);
+
+    btnReset.addEventListener('click', () => {
+      warmingSlider.value = 100;
+      warmingValueEl.textContent = '100';
+      chkPrecip.checked = true;
+      chkHum.checked = true;
+      runSimulation();
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    attachLegendColors();
+    buildTileMap();
+    initBarChart();
+    attachHandlers();
+    runSimulation();
+  });
+</script>
+</body>
+</html>
